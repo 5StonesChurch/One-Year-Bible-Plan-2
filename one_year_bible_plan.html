@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+
+    #content {
+      margin-top: 20px;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    .font-buttons button {
+      margin-right: 10px;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #f7f7f7;
+    }
+
+    .nav-buttons button {
+      margin-right: 10px;
+      padding: 6px 12px;
+      border: none;
+      background: #0077cc;
+      color: white;
+      cursor: pointer;
+    }
+
+    select {
+      padding: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls (NO TITLE) -->
+  <div class="controls">
+
+    <!-- Font size buttons -->
+    <div class="font-buttons">
+      <button onclick="setFontSize('small')">A-</button>
+      <button onclick="setFontSize('medium')">A</button>
+      <button onclick="setFontSize('large')">A+</button>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="nav-buttons">
+      <button onclick="changeDay(-1)">Previous</button>
+      <button onclick="goToToday()">Today</button>
+      <button onclick="changeDay(1)">Next</button>
+    </div>
+
+    <!-- Archive dropdown -->
+    <select id="archive" onchange="jumpToSelected()"></select>
+
+  </div>
+
+  <!-- Bible Reading Content -->
+  <div id="content"></div>
+
+  <script>
+    // ============================
+    // 365 DAY BIBLE READING PLAN
+    // NO REVIEW / CATCH-UP DAYS
+    // ============================
+    const plan = [
+      { day: 1, ot: "Genesis 1", nt: "Matthew 1", ps: "Psalm 1", pr: "Proverbs 1:1-7" },
+      { day: 2, ot: "Genesis 2", nt: "Matthew 2", ps: "Psalm 2", pr: "Proverbs 1:8-19" },
+      { day: 3, ot: "Genesis 3", nt: "Matthew 3", ps: "Psalm 3", pr: "Proverbs 1:20-33" },
+      { day: 4, ot: "Genesis 4", nt: "Matthew 4", ps: "Psalm 4", pr: "Proverbs 1:33" },
+      { day: 5, ot: "Genesis 5", nt: "Matthew 5", ps: "Psalm 5", pr: "Proverbs 2:1-5" },
+      { day: 6, ot: "Genesis 6", nt: "Matthew 6", ps: "Psalm 6", pr: "Proverbs 2:6-9" },
+      { day: 7, ot: "Genesis 7", nt: "Matthew 7", ps: "Psalm 7", pr: "Proverbs 2:10-22" },
+      { day: 8, ot: "Genesis 8", nt: "Matthew 8", ps: "Psalm 8", pr: "Proverbs 3:1-4" },
+      { day: 9, ot: "Genesis 9", nt: "Matthew 9", ps: "Psalm 9", pr: "Proverbs 3:5-6" },
+      { day: 10, ot: "Genesis 10", nt: "Matthew 10", ps: "Psalm 10", pr: "Proverbs 3:7-8" },
+      { day: 11, ot: "Genesis 11", nt: "Matthew 11", ps: "Psalm 11", pr: "Proverbs 3:9-10" },
+      { day: 12, ot: "Genesis 12", nt: "Matthew 12", ps: "Psalm 12", pr: "Proverbs 3:11-12" },
+      { day: 13, ot: "Genesis 13", nt: "Matthew 13", ps: "Psalm 13", pr: "Proverbs 3:13-15" },
+      { day: 14, ot: "Genesis 14", nt: "Matthew 14", ps: "Psalm 14", pr: "Proverbs 3:16-18" },
+      { day: 15, ot: "Genesis 15", nt: "Matthew 15", ps: "Psalm 15", pr: "Proverbs 3:19-20" },
+      { day: 16, ot: "Genesis 16", nt: "Matthew 16", ps: "Psalm 16", pr: "Proverbs 3:21-26" },
+      { day: 17, ot: "Genesis 17", nt: "Matthew 17", ps: "Psalm 17", pr: "Proverbs 3:27-28" },
+      { day: 18, ot: "Genesis 18", nt: "Matthew 18", ps: "Psalm 18", pr: "Proverbs 3:29-30" },
+      { day: 19, ot: "Genesis 19", nt: "Matthew 19", ps: "Psalm 19", pr: "Proverbs 3:31-32" },
+      { day: 20, ot: "Genesis 20", nt: "Matthew 20", ps: "Psalm 20", pr: "Proverbs 3:33-35" },
+      { day: 21, ot: "Genesis 21", nt: "Matthew 21", ps: "Psalm 21", pr: "Proverbs 4:1-4" },
+      { day: 22, ot: "Genesis 22", nt: "Matthew 22", ps: "Psalm 22", pr: "Proverbs 4:5-9" },
+      { day: 23, ot: "Genesis 23", nt: "Matthew 23", ps: "Psalm 23", pr: "Proverbs 4:10-13" },
+      { day: 24, ot: "Genesis 24", nt: "Matthew 24", ps: "Psalm 24", pr: "Proverbs 4:14-17" },
+      { day: 25, ot: "Genesis 25", nt: "Matthew 25", ps: "Psalm 25", pr: "Proverbs 4:18-19" },
+      { day: 26, ot: "Genesis 26", nt: "Matthew 26", ps: "Psalm 26", pr: "Proverbs 4:20-22" },
+      { day: 27, ot: "Genesis 27", nt: "Matthew 27", ps: "Psalm 27", pr: "Proverbs 4:23-24" },
+      { day: 28, ot: "Genesis 28", nt: "Matthew 28", ps: "Psalm 28", pr: "Proverbs 4:25-27" },
+      { day: 29, ot: "Genesis 29", nt: "Mark 1", ps: "Psalm 29", pr: "Proverbs 5:1-6" },
+      { day: 30, ot: "Genesis 30", nt: "Mark 2", ps: "Psalm 30", pr: "Proverbs 5:7-14" },
+      { day: 31, ot: "Genesis 31", nt: "Mark 3", ps: "Psalm 31", pr: "Proverbs 5:15-21" },
+      { day: 32, ot: "Genesis 32", nt: "Mark 4", ps: "Psalm 32", pr: "Proverbs 5:22-23" },
+      { day: 33, ot: "Genesis 33", nt: "Mark 5", ps: "Psalm 33", pr: "Proverbs 6:1-5" },
+      { day: 34, ot: "Genesis 34", nt: "Mark 6", ps: "Psalm 34", pr: "Proverbs 6:6-11" },
+      { day: 35, ot: "Genesis 35", nt: "Mark 7", ps: "Psalm 35", pr: "Proverbs 6:12-15" },
+      { day: 36, ot: "Genesis 36", nt: "Mark 8", ps: "Psalm 36", pr: "Proverbs 6:16-19" },
+      { day: 37, ot: "Genesis 37", nt: "Mark 9", ps: "Psalm 37", pr: "Proverbs 6:20-22" },
+      { day: 38, ot: "Genesis 38", nt: "Mark 10", ps: "Psalm 38", pr: "Proverbs 6:23-25" },
+      { day: 39, ot: "Genesis 39", nt: "Mark 11", ps: "Psalm 39", pr: "Proverbs 6:26-29" },
+      { day: 40, ot: "Genesis 40", nt: "Mark 12", ps: "Psalm 40", pr: "Proverbs 6:30-35" },
+      { day: 41, ot: "Genesis 41", nt: "Mark 13", ps: "Psalm 41", pr: "Proverbs 7:1-5" },
+      { day: 42, ot: "Genesis 42", nt: "Mark 14", ps: "Psalm 42", pr: "Proverbs 7:6-23" },
+      { day: 43, ot: "Genesis 43", nt: "Mark 15", ps: "Psalm 43", pr: "Proverbs 7:24-27" },
+      { day: 44, ot: "Genesis 44", nt: "Mark 16", ps: "Psalm 44", pr: "Proverbs 8:1-11" },
+      { day: 45, ot: "Genesis 45", nt: "Luke 1", ps: "Psalm 45", pr: "Proverbs 8:12-21" },
+      { day: 46, ot: "Genesis 46", nt: "Luke 2", ps: "Psalm 46", pr: "Proverbs 8:22-31" },
+      { day: 47, ot: "Genesis 47", nt: "Luke 3", ps: "Psalm 47", pr: "Proverbs 8:32-36" },
+      { day: 48, ot: "Genesis 48", nt: "Luke 4", ps: "Psalm 48", pr: "Proverbs 9:1-6" },
+      { day: 49, ot: "Genesis 49", nt: "Luke 5", ps: "Psalm 49", pr: "Proverbs 9:7-12" },
+      { day: 50, ot: "Genesis 50", nt: "Luke 6", ps
+
+    // FILL ARCHIVE DROPDOWN
+    const archive = document.getElementById('archive');
+    plan.forEach(d => {
+      const option = document.createElement('option');
+      option.value = d.day;
+      option.textContent = `Day ${d.day}`;
+      archive.appendChild(option);
+    });
+
+    // SET INITIAL DAY
+    let currentDay = new Date().getFullYear() === 2025
+      ? Math.ceil((new Date() - new Date('2025-01-01')) / 86400000)
+      : 1;
+
+    if (currentDay < 1 || currentDay > 365) currentDay = 1;
+
+    // DISPLAY CONTENT
+    function displayDay(day) {
+      const entry = plan.find(d => d.day === day);
+      if (!entry) return;
+      document.getElementById('content').innerHTML = `
+        <h3>Day ${day}</h3>
+        <p><strong>Reading:</strong> ${entry.reading}</p>
+      `;
+      archive.value = day;
+    }
+
+    // NAVIGATION
+    function changeDay(amount) {
+      currentDay += amount;
+      if (currentDay < 1) currentDay = 1;
+      if (currentDay > 365) currentDay = 365;
+      displayDay(currentDay);
+    }
+
+    function jumpToSelected() {
+      currentDay = parseInt(archive.value);
+      displayDay(currentDay);
+    }
+
+    function goToToday() {
+      currentDay = Math.ceil((new Date() - new Date(`${new Date().getFullYear()}-01-01`)) / 86400000);
+      if (currentDay < 1 || currentDay > 365) currentDay = 1;
+      displayDay(currentDay);
+    }
+
+    // FONT SIZE
+    function setFontSize(size) {
+      if (size === 'small') document.body.style.fontSize = '14px';
+      if (size === 'medium') document.body.style.fontSize = '18px';
+      if (size === 'large') document.body.style.fontSize = '22px';
+    }
+
+    // INIT
+    displayDay(currentDay);
+  </script>
+</body>
+</html>
